@@ -1,0 +1,3 @@
+"0",""
+"0","# Añadimos la línea de tendencia indicando también 'data = df'"
+"0","abline(lm(te_cit_gdp ~ v2x_polyarchy, data = df), col = ""red"", lwd = 2)"

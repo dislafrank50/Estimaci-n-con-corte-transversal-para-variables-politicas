@@ -1,0 +1,239 @@
+## 1.2 Datos del Banco Mundial — PIB per cápita (GDP constant 2015 US$)
+
+```{r cargar_bm}
+library(dplyr)
+library(readr)
+
+# 1. Definimos el año de análisis directamente a 2019
+ANIO <- 2019
+
+# Ruta del fichero
+ruta_bm <- "C:/Users/New Frank/Documents/TFM/data/raw-data/Controles_05a34175-206f-4867-be52-acf057444306_Data.csv"
+
+# Carga del CSV
+bm_raw <- read_csv(ruta_bm, skip = 0, show_col_types = FALSE)
+
+# Aseguramos que el año sea numérico para el filtro
+anio_corte <- as.numeric(ANIO)
+
+# Transformación de panel a corte transversal y limpieza del PIB
+bm_gdp_cs <- bm_raw %>%
+  # Filtramos para quedarnos con una única "foto" en el tiempo
+  filter(Time == anio_corte) %>%
+  select(
+    pais_bm       = `Country Name`,
+    iso3_bm       = `Country Code`,
+    gdp_const2015 = `GDP (constant 2015 US$) [NY.GDP.MKTP.KD]`
+  ) %>%
+  mutate(gdp_const2015 = as.numeric(na_if(gdp_const2015, ".."))) %>%
+  filter(!is.na(gdp_const2015))
+
+head(bm_gdp_cs)
+```
+
+## 1.3 Datos V-Dem — Índice de democracia electoral y Controles
+
+```{r cargar_vdem}
+# Lista de variables de control a añadir
+variables_control_vdem <- c(
+  # --- Capital Humano y Demografía ---
+  "e_peaveduc", "e_mipopula", "e_wb_pop", "e_miurbani", "e_miferrat",
+  # --- Recursos y Economía ---
+  "e_total_resources_income_pc", "e_total_oil_income_pc", "v2xeg_eqdr",
+  # --- Región y Efectos Fijos ---
+  "e_regionpol", "e_regionpol_7C", "e_regiongeo",
+  # --- Instituciones, Régimen y Competencia ---
+  "v2x_regime", "e_polcomp", "e_p_polity",
+  # --- Componentes de la Democracia (Nuevas Adiciones) ---
+  "v2x_frassoc_thick", "v2xel_frefair", "v2x_freexp_altinf", "v2x_elecoff", "v2x_suffr"
+)
+
+# Ruta del fichero
+ruta_vdem <- "C:/Users/New Frank/Documents/TFM/data/raw-data/V-Dem-CY-Full+Others-v15.csv"
+
+# Carga del CSV 
+vdem_raw <- read_csv(ruta_vdem, show_col_types = FALSE)
+
+anio_corte <- as.numeric(ANIO)
+
+# Transformación de panel a corte transversal incluyendo la lista de controles
+vdem_cs <- vdem_raw %>%
+  filter(year == anio_corte) %>%
+  select(
+    pais_vdem     = country_name,
+    iso3_vdem     = country_text_id,
+    anio          = year,
+    v2x_polyarchy,  
+    v2x_partipdem,
+    # any_of() buscará y seleccionará todas las variables de tu lista si existen en el dataset
+    any_of(variables_control_vdem) 
+  )
+
+head(vdem_cs)
+```
+
+## 1.4 Datos GTED — Gasto fiscal CIT (% del PIB)
+
+```{r cargar_gted}
+library(readxl)
+
+# Ruta del fichero 
+ruta_gted <- "C:/Users/New Frank/Documents/TFM/data/raw-data/GTED_FullDatabase_20251010.xlsx"
+
+gted_provisions <- read_excel(ruta_gted, sheet = "TEProvisions")
+gted_rf <- read_excel(ruta_gted, sheet = "RevenueForgone")
+
+anio_corte <- as.numeric(ANIO)
+
+cit_provisions <- gted_provisions %>%
+  filter(grepl("Corporate Income Tax|CIT", `Tax type - Level 2`, ignore.case = TRUE)) %>%
+  select(
+    ProvisionID = `Provision ID`, 
+    iso3_gted   = `Country Code`
+  )
+
+gted_cs <- gted_rf %>%
+  filter(Year == anio_corte) %>%
+  select(
+    iso3_gted   = Country,
+    ProvisionID = ProvisionID,
+    anio_gted   = Year,
+    te_cit_gdp  = `RF % of GDP` 
+  ) %>%
+  mutate(te_cit_gdp = as.numeric(te_cit_gdp)) %>%
+  inner_join(cit_provisions, by = c("ProvisionID", "iso3_gted")) %>%
+  group_by(iso3_gted, anio_gted) %>%
+  summarise(te_cit_gdp = sum(te_cit_gdp, na.rm = TRUE), .groups = "drop")
+
+head(gted_cs)
+```
+
+## 1.5 Datos V-Party — Ideología y Populismo
+
+```{r cargar_vparty}
+library(tidyr) # Necesario para la función fill()
+
+# Lista CORREGIDA de variables de V-Party según el Codebook oficial
+variables_ideologia_vparty <- c(
+  "v2pariglef",        # Escala económica izquierda-derecha
+  "v2pawelf",          # Apoyo al estado de bienestar
+  "v2parelig",         # Principios religiosos
+  "v2paimmig",         # Inmigración
+  "v2palgbt",          # Igualdad social LGBT
+  "v2pagender",        # Igualdad de género
+  "v2xpa_popul",       # Índice de populismo
+  "v2paanteli",        # Anti-elitismo
+  "v2papeople",        # Pueblo-centrismo
+  "v2xpa_antiplural",  # Índice de anti-pluralismo
+  "v2paplur",          # Pluralismo político
+  "v2paopresp",        # Demonización de oponentes
+  "v2paminor",         # Derechos de minorías
+  "v2paclient"         # Clientelismo
+)
+
+# RUTA: Asegúrate de que esta es la ruta correcta en tu PC
+ruta_vparty <- "C:/Users/New Frank/Documents/TFM/data/raw-data/CPD_V-Party_CSV_v2/V-Dem-CPD-Party-V2.csv"
+
+# Cargar V-Party
+vparty_raw <- read_csv(ruta_vparty, show_col_types = FALSE)
+
+# Procesamiento: Pasar de "Partido-Elección" a "País-Año (Partido Gobernante)"
+vparty_cs <- vparty_raw %>%
+  # 1. Filtramos hasta nuestro año de corte (2019)
+  filter(year <= ANIO) %>%
+  
+  # 2. Nos quedamos solo con el partido con más escaños en el parlamento
+  # CORRECCIÓN: Usamos 'v2paseatshare' que es el nombre correcto en V-Party
+  group_by(country_text_id, year) %>%
+  slice_max(order_by = v2paseatshare, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  
+  # 3. Seleccionamos las variables clave
+  select(
+    iso3_vparty = country_text_id,
+    year,
+    party_name  = v2pashname, 
+    any_of(variables_ideologia_vparty)
+  ) %>%
+  
+  # 4. Completar los años sin elecciones
+  complete(iso3_vparty, year = 1990:ANIO) %>%
+  group_by(iso3_vparty) %>%
+  arrange(year) %>%
+  # CORRECCIÓN: Forma más robusta de arrastrar los valores hacia abajo (LOCF)
+  fill(c(party_name, any_of(variables_ideologia_vparty)), .direction = "down") %>%
+  ungroup() %>%
+  
+  # 5. Finalmente, filtramos solo la "foto" de 2019
+  filter(year == ANIO)
+
+head(vparty_cs)
+
+```
+
+---
+  
+## 2. Construcción del data frame de análisis
+
+
+```{r merge_datos}
+# Unimos los CUATRO ficheros usando el código ISO3 como clave común
+
+# Paso 1: GTED + V-Dem
+df_temp1 <- left_join(gted_cs, vdem_cs, by = c("iso3_gted" = "iso3_vdem"))
+
+# Paso 2: Añadimos PIB del Banco Mundial
+df_temp2 <- left_join(df_temp1, bm_gdp_cs, by = c("iso3_gted" = "iso3_bm"))
+
+# Paso 3: Añadimos Ideología y Populismo de V-Party
+df_raw <- left_join(df_temp2, vparty_cs, by = c("iso3_gted" = "iso3_vparty"))
+
+cat("Observaciones antes de limpiar:", nrow(df_raw), "\n")
+```
+
+```{r limpiar_datos}
+# --------------------------------------------------------------------------
+# Lista de los 38 países de la OCDE (Códigos ISO3)
+# --------------------------------------------------------------------------
+paises_ocde <- c(
+  "AUS", "AUT", "BEL", "CAN", "CHL", "COL", "CRI", "CZE", "DNK", "EST", 
+  "FIN", "FRA", "DEU", "GRC", "HUN", "ISL", "IRL", "ISR", "ITA", "JPN", 
+  "KOR", "LVA", "LTU", "LUX", "MEX", "NLD", "NZL", "NOR", "POL", "PRT", 
+  "SVK", "SVN", "ESP", "SWE", "CHE", "TUR", "GBR", "USA"
+)
+
+# --------------------------------------------------------------------------
+# Limpieza, Filtro OCDE y transformaciones
+# --------------------------------------------------------------------------
+df <- df_raw %>%
+  # 1. FILTRAMOS SOLO PAÍSES OCDE
+  filter(iso3_gted %in% paises_ocde) %>%
+  
+  # 2. Limpieza de NAs solo en las variables críticas
+  filter(!is.na(te_cit_gdp),
+         !is.na(v2x_polyarchy),
+         !is.na(gdp_const2015)) %>%
+  filter(te_cit_gdp > 0)
+
+# Transformaciones
+df <- df %>%
+  mutate(
+    ln_te_cit    = log(te_cit_gdp),
+    ln_gdp       = log(gdp_const2015),
+    dem2         = v2x_polyarchy^2,
+    etiqueta     = iso3_gted
+  )
+
+cat("Observaciones finales (solo OCDE en 2019):", nrow(df), "\n")
+head(df)
+```
+
+```{r guardar_datos}
+ruta_salida <- "C:/Users/New Frank/Documents/Econometria esttudio de caso/trabajos/corte tranverzar/code/df_tfm_cs.csv"
+write_csv(df, ruta_salida)
+cat("Data frame guardado en:", ruta_salida, "\n")
+
+ruta_rdata <- "C:/Users/New Frank/Documents/Econometria esttudio de caso/trabajos/corte tranverzar/code/df_tfm_cs.RData"
+save(df, file = ruta_rdata)
+cat("Data frame guardado como .RData en:", ruta_rdata, "\n")
+```

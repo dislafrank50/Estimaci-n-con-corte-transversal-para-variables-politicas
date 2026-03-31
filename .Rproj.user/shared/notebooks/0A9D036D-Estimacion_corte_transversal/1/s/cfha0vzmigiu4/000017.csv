@@ -1,0 +1,8 @@
+"0",""
+"0",""
+"0","# 2. ln(Y) vs Democracia"
+"0","plot(ln_te_cit ~ v2x_polyarchy, data = df,"
+"0","     main = ""ln(Gasto CIT) vs Índice Democracia"","
+"0","     xlab = ""v2x_polyarchy"","
+"0","     ylab = ""ln(te_cit_gdp)"","
+"0","     pch  = 19, col = ""steelblue"")"

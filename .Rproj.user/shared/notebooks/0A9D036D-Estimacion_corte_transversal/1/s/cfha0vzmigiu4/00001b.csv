@@ -1,0 +1,2 @@
+"0",""
+"0","text(df$v2x_polyarchy, df$ln_te_cit, labels = df$etiqueta, cex = 0.6, pos = 3)"

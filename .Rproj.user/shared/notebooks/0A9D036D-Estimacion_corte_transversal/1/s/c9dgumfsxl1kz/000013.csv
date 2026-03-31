@@ -1,0 +1,2 @@
+"0","text(which(cook1 > 4/nrow(df)), cook1[cook1 > 4/nrow(df)],"
+"0","     labels = df$etiqueta[cook1 > 4/nrow(df)], cex = 0.7, pos = 3)"

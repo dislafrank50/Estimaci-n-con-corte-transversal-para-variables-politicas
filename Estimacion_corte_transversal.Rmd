@@ -1,0 +1,636 @@
+
+title: "Democracia y Gasto Tributario Empresarial"
+author: "Frank"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+
+# 0. Instalación y carga de paquetes
+
+```{r instalar_paquetes, eval=FALSE}
+install.packages("here")
+install.packages("readr")
+install.packages("readxl")
+install.packages("dplyr")
+install.packages("stargazer")
+install.packages("moments")
+install.packages("fBasics")
+install.packages("car")
+install.packages("lmtest")
+install.packages("tseries")
+install.packages("sandwich")
+install.packages("ggplot2")
+install.packages("corrplot")
+```
+
+```{r cargar_paquetes}
+rm(list = ls())
+
+library(here)        # Directorio de trabajo
+library(readr)       # Leer CsV
+library(readxl)      # Leer Excel (GTED)
+library(dplyr)       # Manipulación de datos
+library(stargazer)   # Tablas de resultados
+library(moments)     # skewness y kurtosis
+library(fBasics)     # Estadísticos básicos
+library(car)         # Contrastes (VIF, REsET, etc.)
+library(lmtest)      # Contrastes (BP, White, GQ)
+library(tseries)     # Contraste Jarque-Bera
+library(sandwich)    # Errores estándar robustos
+library(ggplot2)     # Gráficos
+library(corrplot)    # Matriz de correlaciones visual
+```
+
+
+
+# 1. Carga y nálisis exploratorio de datos
+
+# 1.1 Estadísticos descriptivos
+
+```{r estadisticos_desc}
+
+# Cargar el data frame desde el CsV
+df <- read_csv("df_tfm_cs.csv", show_col_types = FALSE)
+
+```
+
+```{r estadisticosl}
+#  Nombres de variables 
+df <- df %>% rename(
+  GastoFiscal        = te_cit_gdp,
+  GastoFiscal_ln     = ln_te_cit,
+  EleccionesLimpias  = v2xel_frefair,
+  Ig_Distri_Recursos = v2xeg_eqdr,
+  P_Inmi             = v2paimmig,
+  t_Fecund           = e_miferrat,
+  Populismo          = v2xpa_popul
+)
+
+# Actualizar los strings para que apunten a los nuevos nombres
+GastoFiscal        <- "GastoFiscal"
+GastoFiscal_ln     <- "GastoFiscal_ln"
+EleccionesLimpias  <- "EleccionesLimpias"
+ln_gdp             <- "ln_gdp"
+Ig_Distri_Recursos <- "Ig_Distri_Recursos"
+P_Inmi             <- "P_Inmi"
+t_Fecund           <- "t_Fecund"
+Populismo          <- "Populismo"
+
+df.des <- df[, c(GastoFiscal, GastoFiscal_ln, EleccionesLimpias, ln_gdp,
+                 Ig_Distri_Recursos, P_Inmi, t_Fecund, Populismo)]
+
+media      <- sapply(df.des, mean,     na.rm = TRUE)
+mediana    <- sapply(df.des, median,   na.rm = TRUE)
+máximo     <- sapply(df.des, max,      na.rm = TRUE)
+mínimo     <- sapply(df.des, min,      na.rm = TRUE)
+desviación <- sapply(df.des, sd,       na.rm = TRUE)
+asimetría  <- sapply(df.des, skewness, na.rm = TRUE)
+curtosis   <- sapply(df.des, kurtosis, na.rm = TRUE)
+
+round(rbind(media, mediana, máximo, mínimo, desviación, asimetría, curtosis), 3)
+```
+
+## 1.2 Gráficos de dispersión
+
+```{r scatter_dem}
+
+par(mfrow = c(1, 2))
+
+plot(df[[GastoFiscal]] ~ df[[EleccionesLimpias]],
+     main = "Gasto CIT (% PIB) vs Elecciones Libres",
+     xlab = EleccionesLimpias,
+     ylab = paste0(GastoFiscal, " (%)"),
+     pch  = 19, col = "steelblue")
+abline(lm(df[[GastoFiscal]] ~ df[[EleccionesLimpias]]), col = "red", lwd = 2)
+text(df[[EleccionesLimpias]], df[[GastoFiscal]], labels = df$etiqueta, cex = 0.6, pos = 3)
+
+plot(df[[GastoFiscal_ln]] ~ df[[EleccionesLimpias]],
+     main = "ln(Gasto CIT) vs Elecciones Libres",
+     xlab = EleccionesLimpias,
+     ylab = paste0("ln(", GastoFiscal, ")"),
+     pch  = 19, col = "steelblue")
+abline(lm(df[[GastoFiscal_ln]] ~ df[[EleccionesLimpias]]), col = "red", lwd = 2)
+text(df[[EleccionesLimpias]], df[[GastoFiscal_ln]], labels = df$etiqueta, cex = 0.6, pos = 3)
+```
+
+
+
+```{r scatter_controles}
+
+par(mfrow = c(1, 2))
+
+plot(df[[GastoFiscal_ln]] ~ df[[t_Fecund]],
+     main = "ln(Gasto CIT) vs Tasa Migración",
+     xlab = t_Fecund,
+     ylab = paste0("ln(", GastoFiscal_ln, ")"),
+     pch  = 19, col = "forestgreen")
+abline(lm(df[[GastoFiscal_ln]] ~ df[[t_Fecund]]), col = "red", lwd = 2)
+text(df[[t_Fecund]], df[[GastoFiscal_ln]], labels = df$etiqueta, cex = 0.6, pos = 3)
+
+plot(df[[GastoFiscal_ln]] ~ df[[Populismo]],
+     main = "ln(Gasto CIT) vs Populismo",
+     xlab = Populismo,
+     ylab = paste0("ln(", GastoFiscal_ln, ")"),
+     pch  = 19, col = "forestgreen")
+abline(lm(df[[GastoFiscal_ln]] ~ df[[Populismo]]), col = "red", lwd = 2)
+text(df[[Populismo]], df[[GastoFiscal_ln]], labels = df$etiqueta, cex = 0.6, pos = 3)
+```
+
+
+```{r scatter_gdp}
+#  Nombres de variables (modificar aquí si cambian) 
+
+par(mfrow = c(1, 2))
+
+plot(df[[GastoFiscal]] ~ df[[ln_gdp]],
+     main = "Gasto CIT (% PIB) vs ln(PIB)",
+     xlab = ln_gdp,
+     ylab = paste0(GastoFiscal, " (%)"),
+     pch  = 19, col = "darkorange")
+abline(lm(df[[GastoFiscal]] ~ df[[ln_gdp]]), col = "red", lwd = 2)
+text(df[[ln_gdp]], df[[GastoFiscal]], labels = df$etiqueta, cex = 0.6, pos = 3)
+
+plot(df[[GastoFiscal_ln]] ~ df[[ln_gdp]],
+     main = "ln(Gasto CIT) vs ln(PIB)",
+     xlab = ln_gdp,
+     ylab = paste0("ln(", GastoFiscal, ")"),
+     pch  = 19, col = "darkorange")
+abline(lm(df[[GastoFiscal_ln]] ~ df[[ln_gdp]]), col = "red", lwd = 2)
+text(df[[ln_gdp]], df[[GastoFiscal_ln]], labels = df$etiqueta, cex = 0.6, pos = 3)
+```
+
+## 1.3 Matriz de correlaciones
+
+```{r correlaciones}
+
+df.num <- df[, c(GastoFiscal, GastoFiscal_ln, EleccionesLimpias, ln_gdp,
+                 Ig_Distri_Recursos, P_Inmi, t_Fecund, Populismo)]
+cor_matrix <- cor(df.num, use = "complete.obs")
+round(cor_matrix, 3)
+
+corrplot(cor_matrix, method = "color", type = "upper",
+         addCoef.col = "black", tl.col = "black", tl.srt = 45,
+         title = "Matriz de Correlaciones", mar = c(0,0,1,0))
+```
+
+
+
+# 2. Estimación de los modelos MCO
+
+```{r modelo1}
+
+# MODELO 1: Lineal
+# Y = β0 + β1·frefair + β2·ln_gdp + β3·eqdr + β4·immig + u
+
+
+formula1 <- as.formula(paste(GastoFiscal, "~", EleccionesLimpias, "+", ln_gdp, "+", Ig_Distri_Recursos, "+", P_Inmi))
+mod1 <- lm(formula1, data = df)
+summary(mod1)
+```
+
+```{r modelo2}
+
+# MODELO GANADOR: Log-lineal (M2)
+# ln(Y) = β0 + β1·frefair + β2·ln_gdp + β3·eqdr + β4·immig + u
+
+
+
+formula2 <- as.formula(paste(GastoFiscal_ln, "~", EleccionesLimpias, "+", ln_gdp, "+", Ig_Distri_Recursos, "+", P_Inmi))
+mod2 <- lm(formula2, data = df)
+summary(mod2)
+```
+
+
+
+```{r modelo3}
+
+# MODELO 3: Polinómico (cuadrático en democracia) — Log-lineal
+# ln(Y) = β0 + β1·frefair + β2·frefair² + β3·ln_gdp + β4·miferrat + β5·popul + u
+# Permite captar una relación en forma de U o U invertida
+
+
+# Creamos el término cuadrático de la variable de interés
+df$interes2 <- df[[EleccionesLimpias]]^2
+
+formula3 <- as.formula(paste(GastoFiscal_ln, "~", EleccionesLimpias, "+ interes2 +", ln_gdp, "+", Ig_Distri_Recursos, "+", P_Inmi))
+mod3 <- lm(formula3, data = df)
+summary(mod3)
+```
+
+
+
+# 3. Diagnóstico y chequeo de los modelos
+
+```{r seleccion_modelo_chequeo}
+# Guardamos los residuos de cada modelo
+res1 <- resid(mod1)
+res2 <- resid(mod2)
+res3 <- resid(mod3)
+
+yhat1 <- fitted(mod1)
+yhat2 <- fitted(mod2)
+yhat3 <- fitted(mod3)
+```
+
+## 3.1 Estadísticos de los residuos
+
+```{r stats_residuos}
+# Función auxiliar para resumir residuos
+resumen_res <- function(res, nombre) {
+  cat("===", nombre, "===\n")
+  cat(round(c(Media     = mean(res),
+              Mediana   = median(res),
+              Máximo    = max(res),
+              Mínimo    = min(res),
+              Desv.Tip  = sd(res),
+              Asimetría = skewness(res),
+              Curtosis  = kurtosis(res)), 4), "\n\n")
+}
+
+resumen_res(res1, "Modelo 1 — Lineal")
+resumen_res(res2, "Modelo 2 — Log-lineal")
+resumen_res(res3, "Modelo 3 — Cuadrático")
+```
+
+## 3.2 Gráficos de residuos
+
+```{r graficos_residuos_mod1}
+par(mfrow = c(2, 2))
+plot(mod1, main = "Modelo 1 — Lineal")
+```
+
+```{r graficos_residuos_mod2}
+par(mfrow = c(2, 2))
+plot(mod2, main = "Modelo 2 — Log-lineal")
+```
+
+```{r graficos_residuos_mod3}
+par(mfrow = c(2, 2))
+plot(mod3, main = "Modelo 3 — Cuadrático")
+```
+
+```{r residuos_vs_regresores}
+
+# Ventana gráfica de 2 filas y 3 columnas
+par(mfrow = c(2, 3))
+# -- MODELO 1 --
+plot(x = df$EleccionesLimpias, y = res1, main = "Mod1: res vs Elecciones Libres",
+     xlab = "EleccionesLimpias", ylab = "Residuos", pch = 19, col = "steelblue")
+abline(h = 0, col = "red")
+
+plot(x = df$ln_gdp, y = res1, main = "Mod1: res vs ln(PIB)",
+     xlab = "ln_gdp", ylab = "Residuos", pch = 19, col = "steelblue")
+abline(h = 0, col = "red")
+
+plot(x = yhat1, y = res1, main = "Mod1: res vs Ŷ",
+     xlab = "Valores ajustados", ylab = "Residuos", pch = 19, col = "steelblue")
+abline(h = 0, col = "red")
+
+# -- MODELO 2 --
+plot(x = df$EleccionesLimpias, y = res2, main = "Mod2: res vs Elecciones Libres",
+     xlab = "EleccionesLimpias", ylab = "Residuos", pch = 19, col = "darkorange")
+abline(h = 0, col = "red")
+
+plot(x = df$ln_gdp, y = res2, main = "Mod2: res vs ln(PIB)",
+     xlab = "ln_gdp", ylab = "Residuos", pch = 19, col = "darkorange")
+abline(h = 0, col = "red")
+
+plot(x = yhat2, y = res2, main = "Mod2: res vs Ŷ",
+     xlab = "Valores ajustados", ylab = "Residuos", pch = 19, col = "darkorange")
+abline(h = 0, col = "red")
+```
+
+
+## 3.3 Contraste de Heterocedasticidad
+
+### Breusch-Pagan
+
+```{r breusch_pagan}
+cat("=== Contraste de Breusch-Pagan ===\n")
+cat("H0: Homocedasticidad  |  H1: Heterocedasticidad\n\n")
+
+bp1 <- bptest(mod1)
+bp2 <- bptest(mod2)
+bp3 <- bptest(mod3)
+
+cat("Modelo 1 — p-valor:", round(bp1$p.value, 4),
+    ifelse(bp1$p.value < 0.05, "→ RECHAZA H0 (heterocedasticidad)", "→ No rechaza H0"), "\n")
+cat("Modelo 2 — p-valor:", round(bp2$p.value, 4),
+    ifelse(bp2$p.value < 0.05, "→ RECHAZA H0 (heterocedasticidad)", "→ No rechaza H0"), "\n")
+cat("Modelo 3 — p-valor:", round(bp3$p.value, 4),
+    ifelse(bp3$p.value < 0.05, "→ RECHAZA H0 (heterocedasticidad)", "→ No rechaza H0"), "\n")
+```
+
+### White
+
+```{r white}
+cat("=== Contraste de White ===\n")
+cat("(versión no constructiva — incluye cuadrados y productos cruzados)\n")
+cat("H0: Homocedasticidad  |  H1: Heterocedasticidad\n\n")
+
+white1 <- bptest(mod1, ~ EleccionesLimpias * ln_gdp + I(EleccionesLimpias^2) + I(ln_gdp^2), data = df)
+white2 <- bptest(mod2, ~ EleccionesLimpias * ln_gdp + I(EleccionesLimpias^2) + I(ln_gdp^2), data = df)
+white3 <- bptest(mod3, ~ EleccionesLimpias * ln_gdp + I(EleccionesLimpias^2) + I(ln_gdp^2), data = df)
+
+cat("Modelo 1 — p-valor:", round(white1$p.value, 4),
+    ifelse(white1$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+cat("Modelo 2 — p-valor:", round(white2$p.value, 4),
+    ifelse(white2$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+cat("Modelo 3 — p-valor:", round(white3$p.value, 4),
+    ifelse(white3$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+```
+
+### Goldfeld-Quandt
+
+```{r goldfeld_quandt}
+cat("=== Contraste de Goldfeld-Quandt ===\n")
+cat("(ordenado por ln_gdp — variable de control)\n")
+cat("H0: Homocedasticidad  |  H1: Heterocedasticidad\n\n")
+
+gq1 <- gqtest(mod1, order.by = ~ ln_gdp, data = df, fraction = 0.2)
+gq2 <- gqtest(mod2, order.by = ~ ln_gdp, data = df, fraction = 0.2)
+gq3 <- gqtest(mod3, order.by = ~ ln_gdp, data = df, fraction = 0.2)
+
+cat("Modelo 1 — p-valor:", round(gq1$p.value, 4),
+    ifelse(gq1$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+cat("Modelo 2 — p-valor:", round(gq2$p.value, 4),
+    ifelse(gq2$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+cat("Modelo 3 — p-valor:", round(gq3$p.value, 4),
+    ifelse(gq3$p.value < 0.05, "→ RECHAZA H0", "→ No rechaza H0"), "\n")
+```
+
+### Estimación robusta (corrección si hay heterocedasticidad)
+
+```{r errores_robustos}
+cat("=== Estimación con errores estándar robustos HC2 ===\n\n")
+
+cat(" Modelo 1 \n")
+coeftest(mod1, vcov. = vcovHC, type = "HC2")
+
+cat("\n Modelo 2 \n")
+coeftest(mod2, vcov. = vcovHC, type = "HC2")
+
+cat("\n Modelo 3 \n")
+coeftest(mod3, vcov. = vcovHC, type = "HC2")
+```
+
+
+
+## 3.4 Contraste de Normalidad — Jarque-Bera
+
+```{r jarque_bera}
+cat("=== Contraste de Jarque-Bera ===\n")
+cat("H0: Residuos normales  |  H1: No normalidad\n\n")
+
+jb1 <- jarque.bera.test(res1)
+jb2 <- jarque.bera.test(res2)
+jb3 <- jarque.bera.test(res3)
+
+cat("Modelo 1 — p-valor:", round(jb1$p.value, 4),
+    ifelse(jb1$p.value < 0.05, "→ RECHAZA H0 (no normalidad)", "→ No rechaza H0 (normalidad)"), "\n")
+cat("Modelo 2 — p-valor:", round(jb2$p.value, 4),
+    ifelse(jb2$p.value < 0.05, "→ RECHAZA H0 (no normalidad)", "→ No rechaza H0 (normalidad)"), "\n")
+cat("Modelo 3 — p-valor:", round(jb3$p.value, 4),
+    ifelse(jb3$p.value < 0.05, "→ RECHAZA H0 (no normalidad)", "→ No rechaza H0 (normalidad)"), "\n")
+```
+
+```{r qqplot_residuos}
+par(mfrow = c(1, 3))
+
+qqnorm(res1, main = "Q-Q Plot — Modelo 1", pch = 19, col = "steelblue")
+qqline(res1, col = "red")
+
+qqnorm(res2, main = "Q-Q Plot — Modelo 2", pch = 19, col = "darkorange")
+qqline(res2, col = "red")
+
+qqnorm(res3, main = "Q-Q Plot — Modelo 3", pch = 19, col = "forestgreen")
+qqline(res3, col = "red")
+```
+
+
+
+## 3.5 Contraste de Forma Funcional — REsET de Ramsey
+
+```{r reset_ramsey}
+cat("=== Contraste REsET de Ramsey ===\n")
+cat("H0: Forma funcional correcta  |  H1: Especificación incorrecta\n\n")
+
+reset1 <- resettest(mod1, power = 2:3, type = "fitted")
+reset2 <- resettest(mod2, power = 2:3, type = "fitted")
+reset3 <- resettest(mod3, power = 2:3, type = "fitted")
+
+cat("Modelo 1 — p-valor:", round(reset1$p.value, 4),
+    ifelse(reset1$p.value < 0.05, "→ RECHAZA H0 (mala especificación)", "→ No rechaza H0"), "\n")
+cat("Modelo 2 — p-valor:", round(reset2$p.value, 4),
+    ifelse(reset2$p.value < 0.05, "→ RECHAZA H0 (mala especificación)", "→ No rechaza H0"), "\n")
+cat("Modelo 3 — p-valor:", round(reset3$p.value, 4),
+    ifelse(reset3$p.value < 0.05, "→ RECHAZA H0 (mala especificación)", "→ No rechaza H0"), "\n")
+```
+
+
+
+## 3.6 Multicolinealidad — Factor de Inflación de la Varianza (VIF)
+
+```{r vif}
+cat("=== VIF — Factor de Inflación de la Varianza ===\n")
+cat("Regla práctica: VIF > 10 indica multicolinealidad severa\n\n")
+
+cat("Modelo 1:\n")
+vif(mod1)
+
+cat("\nModelo 2:\n")
+vif(mod2)
+
+cat("\nModelo 3 (ojo: dem y dem² serán colineales — es estructural):\n")
+vif(mod3)
+
+# Nota: En el Mod3 la colinealidad entre dem y dem² es esperada y
+# estructural del modelo cuadrático. No invalida el modelo.
+```
+
+
+
+## 3.7 Observaciones Influyentes — Distancia de Cook y Leverage
+
+
+
+```{r observaciones_influyentes_tabla}
+# Tabla de observaciones potencialmente influyentes
+cat("=== Observaciones con Cook > 4/n ===\n")
+cat("Umbral Cook:", round(4/nrow(df), 4), "\n\n")
+
+influyentes <- df %>%
+  mutate(cook1     = cooks.distance(mod1),
+         cook2     = cooks.distance(mod2),
+         leverage1 = hatvalues(mod1),
+         leverage2 = hatvalues(mod2)) %>%
+  filter(cook1 > 4/nrow(df) | cook2 > 4/nrow(df)) %>%
+  select(iso3_gted, GastoFiscal_ln, EleccionesLimpias, ln_gdp,
+         cook1, cook2, leverage1, leverage2)
+
+print(influyentes)
+```
+```{r}
+
+# Robustez del Modelo 2: exclusión de Turquía vs. dummy de Turquía
+
+
+#  Versión 1: excluir Turquía 
+df_sin_tur <- df[df$iso3_gted != "TUR", ]
+
+mod2_sin_tur <- lm(as.formula(paste(GastoFiscal_ln, "~", EleccionesLimpias, "+",
+                                     ln_gdp, "+", Ig_Distri_Recursos, "+", P_Inmi)),
+                   data = df_sin_tur)
+
+#  Versión 2: dummy de Turquía (muestra completa) 
+df$d_tur <- as.integer(df$iso3_gted == "TUR")
+
+mod2_dummy_tur <- lm(as.formula(paste(GastoFiscal_ln, "~", EleccionesLimpias, "+",
+                                       ln_gdp, "+", Ig_Distri_Recursos, "+", P_Inmi,
+                                       "+ d_tur")),
+                     data = df)
+
+#  Resultados individuales 
+cat("=== Modelo 2 — Sin Turquía ===\n")
+summary(mod2_sin_tur)
+
+cat("=== Modelo 2 — Dummy Turquía ===\n")
+summary(mod2_dummy_tur)
+
+#  Tabla comparativa de coeficientes 
+cat("\n=== Comparación de coeficientes: Modelo 2 base vs. robustez ===\n\n")
+cat(sprintf("%-25s %-14s %-14s %-14s\n", "Variable", "Base", "Sin TUR", "Dummy TUR"))
+cat(rep("-", 68), "\n")
+
+vars_base <- names(coef(mod2))
+for (v in vars_base) {
+  b_base    <- coef(mod2)[v]
+  b_sintur  <- ifelse(v %in% names(coef(mod2_sin_tur)),
+                      coef(mod2_sin_tur)[v], NA)
+  b_dummy   <- ifelse(v %in% names(coef(mod2_dummy_tur)),
+                      coef(mod2_dummy_tur)[v], NA)
+  cat(sprintf("%-25s %-14.4f %-14s %-14s\n", v,
+              b_base,
+              ifelse(is.na(b_sintur), "  —", sprintf("%.4f", b_sintur)),
+              ifelse(is.na(b_dummy),  "  —", sprintf("%.4f", b_dummy))))
+}
+# Coeficiente de la dummy (no está en el modelo base)
+cat(sprintf("%-25s %-14s %-14s %-14.4f\n", "d_tur",
+            "  —", "  —", coef(mod2_dummy_tur)["d_tur"]))
+```
+
+
+
+
+# 4. selección del modelo
+
+```{r seleccion_final}
+# Comparamos R² ajustado y AIC/BIC como criterios adicionales
+cat("=== Criterios de selección de modelo ===\n\n")
+
+cat(sprintf("%-25s %-12s %-12s %-12s\n", "Criterio", "Modelo 1", "Modelo 2", "Modelo 3"))
+cat(sprintf("%-25s %-12.4f %-12.4f %-12.4f\n", "R² ajustado",
+            summary(mod1)$adj.r.squared,
+            summary(mod2)$adj.r.squared,
+            summary(mod3)$adj.r.squared))
+cat(sprintf("%-25s %-12.2f %-12.2f %-12.2f\n", "AIC",
+            AIC(mod1), AIC(mod2), AIC(mod3)))
+cat(sprintf("%-25s %-12.2f %-12.2f %-12.2f\n", "BIC",
+            BIC(mod1), BIC(mod2), BIC(mod3)))
+cat(sprintf("%-25s %-12.4f %-12.4f %-12.4f\n", "p-val REsET",
+            reset1$p.value, reset2$p.value, reset3$p.value))
+cat(sprintf("%-25s %-12.4f %-12.4f %-12.4f\n", "p-val Breusch-Pagan",
+            bp1$p.value, bp2$p.value, bp3$p.value))
+cat(sprintf("%-25s %-12.4f %-12.4f %-12.4f\n", "p-val Jarque-Bera",
+            jb1$p.value, jb2$p.value, jb3$p.value))
+```
+
+
+
+# 5. Predicción con el modelo seleccionado
+
+```{r prediccion}
+
+# Predicción con Modelo 2 (log-lineal)
+# ln(Y) = β0 + β1·frefair + β2·ln_gdp + β3·eqdr + β4·immig + u
+
+
+# País hipotético — ajusta los valores según el escenario deseado
+nuevo_pais <- data.frame(
+  EleccionesLimpias = 0.75,
+  ln_gdp        = log(30000),
+  Ig_Distri_Recursos    = mean(df$Ig_Distri_Recursos, na.rm = TRUE),   # 0.848
+  P_Inmi     = mean(df$P_Inmi,  na.rm = TRUE)    # -0.183
+)
+
+cat("=== Predicción puntual — Modelo 2 (log-lineal) ===\n")
+cat("País hipotético: EleccionesLimpias = 0.75 | ln_gdp =", round(log(30000), 3),
+    "| Ig_Distri_Recursos = 0 | P_Inmi = 0\n\n")
+
+pred_media <- predict(mod2, newdata = nuevo_pais, interval = "confidence", level = 0.95)
+pred_indiv <- predict(mod2, newdata = nuevo_pais, interval = "prediction", level = 0.95)
+
+cat("Intervalo de confianza (media):\n")
+cat("  ln(TE_CIT): [", round(pred_media[2], 4), ",", round(pred_media[3], 4), "]\n")
+cat("  TE_CIT (anti-log): [", round(exp(pred_media[2]), 4), ",", round(exp(pred_media[3]), 4), "] % del PIB\n\n")
+
+cat("Intervalo de predicción (observación individual):\n")
+cat("  ln(TE_CIT): [", round(pred_indiv[2], 4), ",", round(pred_indiv[3], 4), "]\n")
+cat("  TE_CIT (anti-log): [", round(exp(pred_indiv[2]), 4), ",", round(exp(pred_indiv[3]), 4), "] % del PIB\n")
+```
+
+
+
+# 6. Interpretación de coeficientes
+
+```{r interpretacion}
+cat("=== Interpretación de los coeficientes ===\n\n")
+
+# Modelo 1
+b1_m1 <- coef(mod1)["EleccionesLimpias"]
+cat("Modelo 1 (lineal):\n")
+cat("  β₁ =", round(b1_m1, 4), "\n")
+cat("  Interpretación: Un aumento de 1 punto en EleccionesLimpias se asocia con\n")
+cat("  un cambio de", round(b1_m1, 4), "puntos porcentuales en TE_CIT/PIB.\n\n")
+
+# Modelo 2
+b1_m2 <- coef(mod2)["EleccionesLimpias"]
+cat("Modelo 2 (log-lineal):\n")
+cat("  β₁ =", round(b1_m2, 4), "\n")
+cat("  Interpretación: Un aumento de 1 punto en EleccionesLimpias se asocia con\n")
+cat("  un cambio de", round(b1_m2 * 100, 2), "% en TE_CIT/PIB.\n")
+cat("  (β₁ × 100 =", round(b1_m2 * 100, 2), "%)\n\n")
+
+# signo
+if (b1_m2 < 0) {
+  cat("  → signo NEGATIVO: mayor democracia → menor gasto tributario CIT.\n")
+  cat("    Consistente con H1 del TFM: el escrutinio democrático\n")
+  cat("    reduce la captura regulatoria de las empresas.\n")
+} else {
+  cat("  → signo POsITIVO: mayor democracia → mayor gasto tributario CIT.\n")
+    cat("    Podría reflejar que democracias más maduras tienen sistemas\n")
+  cat("    fiscales más desarrollados con mayor número de beneficios formalizados.\n")
+}
+
+
+```
+
+
+
+# Información de sesión
+
+```{r session_info}
+sessionInfo()
+```

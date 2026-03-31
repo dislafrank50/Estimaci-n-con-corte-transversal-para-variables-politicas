@@ -1,0 +1,3 @@
+"0",""
+"0","plot(leverage1, type = ""h"", main = ""Leverage — Modelo 1"","
+"0","     ylab = ""h_ii"", xlab = ""Observación"")"

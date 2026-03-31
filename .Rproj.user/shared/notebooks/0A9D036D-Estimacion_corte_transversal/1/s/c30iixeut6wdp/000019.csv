@@ -1,0 +1,3 @@
+"0","text(which(leverage2 > 2*(length(coef(mod2))/nrow(df))),"
+"0","     leverage2[leverage2 > 2*(length(coef(mod2))/nrow(df))],"
+"0","     labels = df$etiqueta[leverage2 > 2*(length(coef(mod2))/nrow(df))], cex = 0.7, pos = 3)"

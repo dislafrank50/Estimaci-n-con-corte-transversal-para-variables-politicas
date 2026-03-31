@@ -1,0 +1,2 @@
+"0","par(mfrow = c(2, 2))"
+"0","plot(mod2, main = ""Modelo 2 — Log-lineal"")"

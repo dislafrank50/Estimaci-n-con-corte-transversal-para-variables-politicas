@@ -1,0 +1,2 @@
+"0","text(which(leverage1 > umbral_lev), leverage1[leverage1 > umbral_lev],"
+"0","     labels = df$etiqueta[leverage1 > umbral_lev], cex = 0.7, pos = 3)"

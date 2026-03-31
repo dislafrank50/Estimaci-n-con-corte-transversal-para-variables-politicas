@@ -1,0 +1,40 @@
+"0","# Tabla de observaciones potencialmente influyentes"
+"0","cat(""=== Observaciones con Cook > 4/n ===\n"")"
+"1","=== Observaciones con Cook > 4/n ===
+"
+"0","cat(""Umbral Cook:"", round(4/nrow(df), 4), ""\n\n"")"
+"1","Umbral Cook:"
+"1"," "
+"1","0.0645"
+"1"," "
+"1","
+
+"
+"0","influyentes <- df %>%"
+"0","  mutate(cook1     = cooks.distance(mod1),"
+"0","         cook2     = cooks.distance(mod2),"
+"0","         leverage1 = hatvalues(mod1),"
+"0","         leverage2 = hatvalues(mod2)) %>%"
+"0","  filter(cook1 > 4/nrow(df) | cook2 > 4/nrow(df)) %>%"
+"0","  select(etiqueta, te_cit_gdp, v2x_polyarchy, ln_gdp,"
+"0","         cook1, cook2, leverage1, leverage2)"
+"0",""
+"0","print(influyentes)"
+"1","[38;5;246m# A tibble: 6 × 8[39m
+"
+"1","  etiqueta te_cit_gdp v2x_polyarchy ln_gdp  cook1  cook2 leverage1 leverage2
+"
+"1","  [3m[38;5;246m<chr>[39m[23m         [3m[38;5;246m<dbl>[39m[23m         [3m[38;5;246m<dbl>[39m[23m  [3m[38;5;246m<dbl>[39m[23m  [3m[38;5;246m<dbl>[39m[23m  [3m[38;5;246m<dbl>[39m[23m     [3m[38;5;246m<dbl>[39m[23m     [3m[38;5;246m<dbl>[39m[23m
+"
+"1","[38;5;250m1[39m DEU        0.012[4m5[24m           0.885   28.9 0.020[4m1[24m 0.096[4m6[24m    0.059[4m8[24m    0.059[4m8[24m
+"
+"1","[38;5;250m2[39m EST        0.011[4m9[24m           0.895   23.9 0.024[4m0[24m 0.121     0.066[4m3[24m    0.066[4m3[24m
+"
+"1","[38;5;250m3[39m FIN        3.75             0.871   26.2 0.237  0.023[4m9[24m    0.028[4m7[24m    0.028[4m7[24m
+"
+"1","[38;5;250m4[39m NOR        2.42             0.896   26.7 0.087[4m9[24m 0.017[4m7[24m    0.032[4m4[24m    0.032[4m4[24m
+"
+"1","[38;5;250m5[39m PNG        2.41             0.438   23.8 0.179  0.050[4m3[24m    0.049[4m7[24m    0.049[4m7[24m
+"
+"1","[38;5;250m6[39m TUR        0.000[4m1[24m[4m7[24m[4m6[24m         0.387   27.5 0.010[4m8[24m 0.671     0.090[4m1[24m    0.090[4m1[24m
+"

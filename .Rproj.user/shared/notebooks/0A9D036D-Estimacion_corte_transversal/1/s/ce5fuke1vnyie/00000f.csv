@@ -1,0 +1,3 @@
+"0","par(mfrow = c(1, 3))"
+"0",""
+"0","qqnorm(res1, main = ""Q-Q Plot — Modelo 1"", pch = 19, col = ""steelblue"")"

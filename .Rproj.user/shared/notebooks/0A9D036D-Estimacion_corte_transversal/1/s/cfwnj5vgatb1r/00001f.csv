@@ -1,0 +1,4 @@
+"0",""
+"0","# Añadimos df$ a ln_gdp"
+"0","plot(x = df$ln_gdp, y = res2, main = ""Mod2: res vs ln(PIB)"","
+"0","     xlab = ""ln_gdp"", ylab = ""Residuos"", pch = 19, col = ""darkorange"")"

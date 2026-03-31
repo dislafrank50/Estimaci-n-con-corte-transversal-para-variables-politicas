@@ -1,0 +1,34 @@
+"0","# Comparamos R² ajustado y AIC/BIC como criterios adicionales"
+"0","cat(""=== Criterios de selección de modelo ===\n\n"")"
+"1","=== Criterios de selección de modelo ===
+
+"
+"0","cat(sprintf(""%-25s %-12s %-12s %-12s\n"", ""Criterio"", ""Modelo 1"", ""Modelo 2"", ""Modelo 3""))"
+"1","Criterio                  Modelo 1     Modelo 2     Modelo 3    
+"
+"0","cat(sprintf(""%-25s %-12.4f %-12.4f %-12.4f\n"", ""R² ajustado"","
+"0","            summary(mod1)$adj.r.squared,"
+"0","            summary(mod2)$adj.r.squared,"
+"0","            summary(mod3)$adj.r.squared))"
+"1","R² ajustado              -0.0040      0.0060       -0.0062     
+"
+"0","cat(sprintf(""%-25s %-12.2f %-12.2f %-12.2f\n"", ""AIC"","
+"0","            AIC(mod1), AIC(mod2), AIC(mod3)))"
+"1","AIC                       126.82       236.93       127.90      
+"
+"0","cat(sprintf(""%-25s %-12.2f %-12.2f %-12.2f\n"", ""BIC"","
+"0","            BIC(mod1), BIC(mod2), BIC(mod3)))"
+"1","BIC                       135.33       245.44       138.53      
+"
+"0","cat(sprintf(""%-25s %-12.4f %-12.4f %-12.4f\n"", ""p-val RESET"","
+"0","            reset1$p.value, reset2$p.value, reset3$p.value))"
+"1","p-val RESET               0.6145       0.2464       0.6082      
+"
+"0","cat(sprintf(""%-25s %-12.4f %-12.4f %-12.4f\n"", ""p-val Breusch-Pagan"","
+"0","            bp1$p.value, bp2$p.value, bp3$p.value))"
+"1","p-val Breusch-Pagan       0.6106       0.2226       0.6102      
+"
+"0","cat(sprintf(""%-25s %-12.4f %-12.4f %-12.4f\n"", ""p-val Jarque-Bera"","
+"0","            jb1$p.value, jb2$p.value, jb3$p.value))"
+"1","p-val Jarque-Bera         0.0000       0.0000       0.0000      
+"

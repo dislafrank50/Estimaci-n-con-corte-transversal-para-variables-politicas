@@ -1,0 +1,7 @@
+"0","# Ventana gráfica de 2 filas y 3 columnas"
+"0","par(mfrow = c(2, 3))"
+"0",""
+"0","# ----------------- MODELO 1 -----------------"
+"0","# Añadimos df$ a v2x_polyarchy"
+"0","plot(x = df$v2x_polyarchy, y = res1, main = ""Mod1: res vs Democracia"","
+"0","     xlab = ""v2x_polyarchy"", ylab = ""Residuos"", pch = 19, col = ""steelblue"")"

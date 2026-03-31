@@ -1,0 +1,2 @@
+"0",""
+"0","abline(lm(te_cit_gdp ~ ln_gdp, data = df), col = ""red"", lwd = 2)"

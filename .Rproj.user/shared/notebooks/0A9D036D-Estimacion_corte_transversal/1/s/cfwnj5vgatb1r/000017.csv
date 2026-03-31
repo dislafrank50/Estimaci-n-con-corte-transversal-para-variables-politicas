@@ -1,0 +1,4 @@
+"0",""
+"0","# yhat1 y res1 se quedan igual porque vienen del modelo, no de 'df'"
+"0","plot(x = yhat1, y = res1, main = ""Mod1: res vs Ŷ"","
+"0","     xlab = ""Valores ajustados"", ylab = ""Residuos"", pch = 19, col = ""steelblue"")"

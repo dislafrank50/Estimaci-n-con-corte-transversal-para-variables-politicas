@@ -1,0 +1,73 @@
+"0","cat(""=== Interpretación de los coeficientes ===\n\n"")"
+"1","=== Interpretación de los coeficientes ===
+
+"
+"0","# Modelo 1"
+"0","b1_m1 <- coef(mod1)[""v2x_polyarchy""]"
+"0","cat(""Modelo 1 (lineal):\n"")"
+"1","Modelo 1 (lineal):
+"
+"0","cat(""  β₁ ="", round(b1_m1, 4), ""\n"")"
+"1","  β₁ ="
+"1"," "
+"1","0.5504"
+"1"," "
+"1","
+"
+"0","cat(""  Interpretación: Un aumento de 1 punto en v2x_polyarchy se asocia con\n"")"
+"1","  Interpretación: Un aumento de 1 punto en v2x_polyarchy se asocia con
+"
+"0","cat(""  un cambio de"", round(b1_m1, 4), ""puntos porcentuales en TE_CIT/PIB.\n\n"")"
+"1","  un cambio de"
+"1"," "
+"1","0.5504"
+"1"," "
+"1","puntos porcentuales en TE_CIT/PIB.
+
+"
+"0","# Modelo 2"
+"0","b1_m2 <- coef(mod2)[""v2x_polyarchy""]"
+"0","cat(""Modelo 2 (log-lineal):\n"")"
+"1","Modelo 2 (log-lineal):
+"
+"0","cat(""  β₁ ="", round(b1_m2, 4), ""\n"")"
+"1","  β₁ ="
+"1"," "
+"1","1.59"
+"1"," "
+"1","
+"
+"0","cat(""  Interpretación: Un aumento de 1 punto en v2x_polyarchy se asocia con\n"")"
+"1","  Interpretación: Un aumento de 1 punto en v2x_polyarchy se asocia con
+"
+"0","cat(""  un cambio de"", round(b1_m2 * 100, 2), ""% en TE_CIT/PIB.\n"")"
+"1","  un cambio de"
+"1"," "
+"1","159"
+"1"," "
+"1","% en TE_CIT/PIB.
+"
+"0","cat(""  (β₁ × 100 ="", round(b1_m2 * 100, 2), ""%)\n\n"")"
+"1","  (β₁ × 100 ="
+"1"," "
+"1","159"
+"1"," "
+"1","%)
+
+"
+"0","# Signo"
+"0","if (b1_m2 < 0) {"
+"0","  cat(""  → Signo NEGATIVO: mayor democracia → menor gasto tributario CIT.\n"")"
+"0","  cat(""    Consistente con H1 del TFM: el escrutinio democrático\n"")"
+"0","  cat(""    reduce la captura regulatoria de las empresas.\n"")"
+"0","} else {"
+"0","  cat(""  → Signo POSITIVO: mayor democracia → mayor gasto tributario CIT.\n"")"
+"0","    cat(""    Podría reflejar que democracias más maduras tienen sistemas\n"")"
+"0","  cat(""    fiscales más desarrollados con mayor número de beneficios formalizados.\n"")"
+"0","}"
+"1","  → Signo POSITIVO: mayor democracia → mayor gasto tributario CIT.
+"
+"1","    Podría reflejar que democracias más maduras tienen sistemas
+"
+"1","    fiscales más desarrollados con mayor número de beneficios formalizados.
+"

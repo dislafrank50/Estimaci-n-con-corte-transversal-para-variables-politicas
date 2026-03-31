@@ -1,0 +1,7 @@
+"0","par(mfrow = c(1, 2))"
+"0",""
+"0","cook2     <- cooks.distance(mod2)"
+"0","leverage2 <- hatvalues(mod2)"
+"0",""
+"0","plot(cook2, type = ""h"", main = ""Distancia de Cook — Modelo 2"","
+"0","     ylab = ""Distancia de Cook"", xlab = ""Observación"")"

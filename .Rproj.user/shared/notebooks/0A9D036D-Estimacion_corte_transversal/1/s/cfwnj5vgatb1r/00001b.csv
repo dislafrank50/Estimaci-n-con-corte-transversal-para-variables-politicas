@@ -1,0 +1,6 @@
+"0",""
+"0",""
+"0","# ----------------- MODELO 2 -----------------"
+"0","# Añadimos df$ a v2x_polyarchy"
+"0","plot(x = df$v2x_polyarchy, y = res2, main = ""Mod2: res vs Democracia"","
+"0","     xlab = ""v2x_polyarchy"", ylab = ""Residuos"", pch = 19, col = ""darkorange"")"

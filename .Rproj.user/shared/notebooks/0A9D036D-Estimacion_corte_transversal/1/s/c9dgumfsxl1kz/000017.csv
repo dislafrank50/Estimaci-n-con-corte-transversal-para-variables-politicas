@@ -1,0 +1,2 @@
+"0","umbral_lev <- 2 * (length(coef(mod1)) / nrow(df))"
+"0","abline(h = umbral_lev, col = ""red"", lty = 2)"
